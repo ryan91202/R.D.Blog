@@ -316,6 +316,28 @@ postForm.addEventListener("submit", (e) => {
 
 renderPosts();
 </script>
+<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
 
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyDx7pyTcX3DrCgm3Pl4PpLZPMCZHJaAvhU",
+    authDomain: "blog-ad61b.firebaseapp.com",
+    projectId: "blog-ad61b",
+    storageBucket: "blog-ad61b.firebasestorage.app",
+    messagingSenderId: "251170373130",
+    appId: "1:251170373130:web:6982239416be2c3f90e9f3",
+    measurementId: "G-PEP0W2Q1LQ"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+</script>
 </body>
 </html>
