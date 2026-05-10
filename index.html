@@ -216,115 +216,62 @@ button:active {
 
 <script>
 /* ====== BLOG LOGIC ====== */
-const STORAGE_KEY = "my_ideas_blog_posts";
-
-const postForm = document.getElementById("postForm");
-const titleInput = document.getElementById("title");
-const contentInput = document.getElementById("content");
-const postsContainer = document.getElementById("postsContainer");
-
-function loadPosts() {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return [];
-  try { return JSON.parse(raw); } catch { return []; }
-}
-
-function savePosts(posts) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
-}
-
-function formatDate(dateString) {
-  return new Date(dateString).toLocaleString();
-}
-
-function renderPosts() {
-  const posts = loadPosts().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  postsContainer.innerHTML = "";
-
-  if (posts.length === 0) {
-    const empty = document.createElement("p");
-    empty.textContent = "No posts yet. Write something above and hit Publish.";
-    empty.style.color = "#9ca3af";
-    postsContainer.appendChild(empty);
-    return;
-  }
-
-  posts.forEach((post, index) => {
-    const postEl = document.createElement("article");
-    postEl.className = "post";
-
-    const header = document.createElement("div");
-    header.className = "post-header";
-
-    const title = document.createElement("h3");
-    title.className = "post-title";
-    title.textContent = post.title;
-
-    const date = document.createElement("span");
-    date.className = "post-date";
-    date.textContent = formatDate(post.createdAt);
-
-    header.appendChild(title);
-    header.appendChild(date);
-
-    const content = document.createElement("div");
-    content.className = "post-content";
-    content.textContent = post.content;
-
-    const actions = document.createElement("div");
-    actions.className = "post-actions";
-
-    const deleteBtn = document.createElement("button");
-    deleteBtn.className = "delete-btn";
-    deleteBtn.textContent = "Delete";
-    deleteBtn.onclick = () => {
-      const current = loadPosts();
-      current.splice(index, 1);
-      savePosts(current);
-      renderPosts();
-    };
-
-    actions.appendChild(deleteBtn);
-
-    postEl.appendChild(header);
-    postEl.appendChild(content);
-    postEl.appendChild(actions);
-
-    postsContainer.appendChild(postEl);
-  });
-}
-
-postForm.addEventListener("submit", (e) => {
+postForm.addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const title = titleInput.value.trim();
   const content = contentInput.value.trim();
   if (!title || !content) return;
 
-  const posts = loadPosts();
-  posts.push({
+  await addDoc(collection(db, "posts"), {
     title,
     content,
-    createdAt: new Date().toISOString(),
+    createdAt: Date.now()
   });
 
-  savePosts(posts);
-  titleInput.value = "";
-  contentInput.value = "";
-  renderPosts();
-});
+async function loadPosts() {
+  const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
+  const snapshot = await getDocs(q);
 
-renderPosts();
+  postsContainer.innerHTML = "";
+
+  snapshot.forEach((docSnap) => {
+    const post = docSnap.data();
+    const id = docSnap.id;
+
+    const postEl = document.createElement("article");
+    postEl.className = "post";
+
+    postEl.innerHTML = `
+      <div class="post-header">
+        <h3 class="post-title">${post.title}</h3>
+        <span class="post-date">${new Date(post.createdAt).toLocaleString()}</span>
+      </div>
+      <div class="post-content">${post.content}</div>
+      <div class="post-actions">
+        <button class="delete-btn" data-id="${id}">Delete</button>
+      </div>
+    `;
+
+    postsContainer.appendChild(postEl);
+  });
+
+  document.querySelectorAll(".delete-btn").forEach(btn => {
+    btn.onclick = async () => {
+      await deleteDoc(doc(db, "posts", btn.dataset.id));
+      loadPosts();
+    };
+  });
+}
+
+loadPosts();
+
 </script>
 <script type="module">
-  // Import the functions you need from the SDKs you need
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-analytics.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
+  import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, orderBy, query } 
+    from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
-  // Your web app's Firebase configuration
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
   const firebaseConfig = {
     apiKey: "AIzaSyDx7pyTcX3DrCgm3Pl4PpLZPMCZHJaAvhU",
     authDomain: "blog-ad61b.firebaseapp.com",
@@ -335,9 +282,9 @@ renderPosts();
     measurementId: "G-PEP0W2Q1LQ"
   };
 
-  // Initialize Firebase
   const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
+  const db = getFirestore(app);
+
 </script>
 </body>
 </html>
