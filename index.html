@@ -16,7 +16,7 @@
 
 body {
   background: #0f172a;
-  color: sky blue;
+  color: #e5e7eb;
   line-height: 1.6;
 }
 
@@ -84,7 +84,7 @@ textarea {
   border-radius: 0.5rem;
   border: 1px solid #374151;
   background: #020617;
-  color: #995395;
+  color: #f9fafb;
   font-size: 0.95rem;
   outline: none;
   transition: border 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
@@ -157,7 +157,6 @@ button:active {
   overflow-wrap: break-word;
 }
 
-
 .post-actions {
   margin-top: 0.7rem;
   display: flex;
@@ -211,67 +210,24 @@ button:active {
 </main>
 
 <footer class="footer">
-  Built by me, powered by static HTML/CSS/JS.
+  Built by me, powered by static HTML/CSS/JS + Firebase.
 </footer>
 
-<script>
-/* ====== BLOG LOGIC ====== */
-postForm.addEventListener("submit", async (e) => {
-  e.preventDefault();
-
-  const title = titleInput.value.trim();
-  const content = contentInput.value.trim();
-  if (!title || !content) return;
-
-  await addDoc(collection(db, "posts"), {
-    title,
-    content,
-    createdAt: Date.now()
-  });
-
-async function loadPosts() {
-  const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
-  const snapshot = await getDocs(q);
-
-  postsContainer.innerHTML = "";
-
-  snapshot.forEach((docSnap) => {
-    const post = docSnap.data();
-    const id = docSnap.id;
-
-    const postEl = document.createElement("article");
-    postEl.className = "post";
-
-    postEl.innerHTML = `
-      <div class="post-header">
-        <h3 class="post-title">${post.title}</h3>
-        <span class="post-date">${new Date(post.createdAt).toLocaleString()}</span>
-      </div>
-      <div class="post-content">${post.content}</div>
-      <div class="post-actions">
-        <button class="delete-btn" data-id="${id}">Delete</button>
-      </div>
-    `;
-
-    postsContainer.appendChild(postEl);
-  });
-
-  document.querySelectorAll(".delete-btn").forEach(btn => {
-    btn.onclick = async () => {
-      await deleteDoc(doc(db, "posts", btn.dataset.id));
-      loadPosts();
-    };
-  });
-}
-
-loadPosts();
-
-</script>
 <script type="module">
+  // ====== FIREBASE IMPORTS ======
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
-  import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, orderBy, query } 
-    from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+  import {
+    getFirestore,
+    collection,
+    addDoc,
+    getDocs,
+    deleteDoc,
+    doc,
+    orderBy,
+    query
+  } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
+  // ====== FIREBASE CONFIG ======
   const firebaseConfig = {
     apiKey: "AIzaSyDx7pyTcX3DrCgm3Pl4PpLZPMCZHJaAvhU",
     authDomain: "blog-ad61b.firebaseapp.com",
@@ -285,6 +241,81 @@ loadPosts();
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
+  // ====== DOM ELEMENTS ======
+  const postForm = document.getElementById("postForm");
+  const titleInput = document.getElementById("title");
+  const contentInput = document.getElementById("content");
+  const postsContainer = document.getElementById("postsContainer");
+
+  // ====== LOAD POSTS FROM FIRESTORE ======
+  async function loadPosts() {
+    postsContainer.innerHTML = "<p style='color:#9ca3af;'>Loading...</p>";
+
+    const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
+    const snapshot = await getDocs(q);
+
+    postsContainer.innerHTML = "";
+
+    if (snapshot.empty) {
+      const empty = document.createElement("p");
+      empty.textContent = "No posts yet. Write something above and hit Publish.";
+      empty.style.color = "#9ca3af";
+      postsContainer.appendChild(empty);
+      return;
+    }
+
+    snapshot.forEach((docSnap) => {
+      const post = docSnap.data();
+      const id = docSnap.id;
+
+      const postEl = document.createElement("article");
+      postEl.className = "post";
+
+      postEl.innerHTML = `
+        <div class="post-header">
+          <h3 class="post-title">${post.title}</h3>
+          <span class="post-date">${new Date(post.createdAt).toLocaleString()}</span>
+        </div>
+        <div class="post-content">${post.content}</div>
+        <div class="post-actions">
+          <button class="delete-btn" data-id="${id}">Delete</button>
+        </div>
+      `;
+
+      postsContainer.appendChild(postEl);
+    });
+
+    // Hook up delete buttons
+    document.querySelectorAll(".delete-btn").forEach(btn => {
+      btn.onclick = async () => {
+        await deleteDoc(doc(db, "posts", btn.dataset.id));
+        loadPosts();
+      };
+    });
+  }
+
+  // ====== HANDLE NEW POST SUBMIT ======
+  postForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const title = titleInput.value.trim();
+    const content = contentInput.value.trim();
+    if (!title || !content) return;
+
+    await addDoc(collection(db, "posts"), {
+      title,
+      content,
+      createdAt: Date.now()
+    });
+
+    titleInput.value = "";
+    contentInput.value = "";
+    loadPosts();
+  });
+
+  // Initial load
+  loadPosts();
 </script>
+
 </body>
 </html>
