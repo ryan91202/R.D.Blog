@@ -214,8 +214,7 @@ button:active {
 </footer>
 
 <script type="module">
-  // ====== FIREBASE IMPORTS ======
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
   import {
     getFirestore,
     collection,
@@ -225,7 +224,20 @@ button:active {
     doc,
     orderBy,
     query
-  } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDx7pyTcX3DrCgm3Pl4PpLZPMCZHJaAvhU",
+    authDomain: "blog-ad61b.firebaseapp.com",
+    projectId: "blog-ad61b",
+    storageBucket: "blog-ad61b.appspot.com",
+    messagingSenderId: "251170373130",
+    appId: "1:251170373130:web:6982239416be2c3f90e9f3",
+    measurementId: "G-PEP0W2Q1LQ"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
 
   // ====== FIREBASE CONFIG ======
   const firebaseConfig = {
